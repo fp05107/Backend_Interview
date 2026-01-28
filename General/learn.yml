@@ -1,0 +1,23 @@
+version: 3.2 #Inline comment
+learn_type: master_level
+temparature: hot
+servings: 2
+
+chai_recipe:
+  base: black_tea
+  milk: whole_milk
+
+chai_recipe_two:
+  base: black_tea
+  milk: whole_milk
+
+chai_name: Masala Chai
+description: "Chai with cardamom, ginger"
+tagline: 'The best chai in town'
+
+brewing_instruction: |
+  boil water
+  add tea leaves
+  add milk
+
+cups_per_day: 3
