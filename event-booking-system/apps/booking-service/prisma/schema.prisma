@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../../../node_modules/@prisma/client/booking"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Booking {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  userId    Int
+  seatId    String
+  status    String   @default("PENDING") // PENDING, CONFIRMED, FAILED
+  createdAt DateTime @default(now())
+}
