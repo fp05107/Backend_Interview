@@ -6,17 +6,14 @@ const STATE = {
 
 class MyPromise {
   constructor(executionFunction) {
-    this.state = STATE.PENDING;  // Starts locked
-    this.value = undefined;      // No value yet
-    this.callbacks = [];         // A list of functions waiting for the box to open
+    this.state = STATE.PENDING;
+    this.value = undefined;
+    this.callbacks = [];
 
-    // We bind 'this' to avoid context issues
-    // bind() ensures 'this' inside resolve always refers to the MyPromise instance
     this.resolve = this.resolve.bind(this);
     this.reject = this.reject.bind(this);
 
     try {
-      // Run the user's function immediately!
       executionFunction(this.resolve, this.reject);
     } catch (err) {
       this.reject(err);
@@ -28,55 +25,98 @@ class MyPromise {
 
     this.state = STATE.FULFILLED;
     this.value = value;
+    this.triggerCallbacks();
+  }
 
-    // FIX: Wrap the loop in queueMicrotask
+  reject(reason) {
+    if (this.state !== STATE.PENDING) return;
+
+    this.state = STATE.REJECTED;
+    this.value = reason;
+    this.triggerCallbacks();
+  }
+
+  triggerCallbacks() {
+    // We use queueMicrotask to ensure async behavior (even for sync resolves)
     queueMicrotask(() => {
-      this.callbacks.forEach((callbackFunction) => {
-        callbackFunction(this.value);
+      this.callbacks.forEach((callbackObj) => {
+        this.handleCallback(callbackObj);
       });
+      this.callbacks = []; // Clear the list
     });
   }
 
-  then(onSuccess) {
-    if (this.state === STATE.FULFILLED) {
-      // FIX: Wrap the execution in queueMicrotask
-      queueMicrotask(() => {
-        onSuccess(this.value);
-      });
-    }
+  handleCallback({ onSuccess, onFail, resolve, reject }) {
+    try {
+      let result;
 
-    if (this.state === STATE.PENDING) {
-      this.callbacks.push(onSuccess);
+      if (this.state === STATE.FULFILLED) {
+        // If no onSuccess handler, just pass value through
+        if (!onSuccess) {
+          resolve(this.value);
+        } else {
+          result = onSuccess(this.value);
+          resolve(result);
+        }
+      } 
+      
+      else if (this.state === STATE.REJECTED) {
+        // If no onFail handler, just pass error through
+        if (!onFail) {
+          reject(this.value);
+        } else {
+          result = onFail(this.value);
+          resolve(result); // Recovery: We handled the error, so resolve!
+        }
+      }
+    } catch (err) {
+      reject(err); // If handler throws, reject the new promise
     }
   }
 
-  reject(reason) { }
+  then(onSuccess, onFail) {
+    return new MyPromise((resolve, reject) => {
+      const callbackObj = { onSuccess, onFail, resolve, reject };
 
+      if (this.state === STATE.PENDING) {
+        this.callbacks.push(callbackObj);
+      } else {
+        // If already settled, run immediately (via microtask)
+        queueMicrotask(() => this.handleCallback(callbackObj));
+      }
+    });
+  }
 
+  catch(onFail) {
+    return this.then(undefined, onFail);
+  }
+
+  // Bonus: Static methods (Easy interview wins)
+  // static resolve(value) {
+  //   return new MyPromise((resolve) => resolve(value));
+  // }
+
+  // static reject(reason) {
+  //   return new MyPromise((_, reject) => reject(reason));
+  // }
 }
 
-console.log("1. Start");
+// module.exports = MyPromise;
 
-const p = new MyPromise((resolve) => {
-  resolve("2. Instant Data"); // This happens NOW
+const p = new MyPromise((resolve, reject) => {
+  setTimeout(() => {
+    console.log("1. API Failed!");
+    reject("Server 500 Error"); 
+  }, 1000);
 });
 
 p.then((data) => {
-  console.log(data); // This should happen LATER
+  console.log("This should NOT run");
+})
+.catch((err) => {
+  console.log("2. Caught Error:", err);
+  return "Recovered";
+})
+.then((data) => {
+  console.log("3. Chain continues with:", data);
 });
-
-console.log("3. End");
-
-// const p = new MyPromise((resolve, reject) => {
-//   console.log("1. Action started...");
-
-//   // Simulate an API call taking 1 second
-//   setTimeout(() => {
-//     console.log("2. Action finished!");
-//     resolve("DATA RECEIVED");
-//   }, 1000);
-// });
-
-// p.then((data) => {
-//   console.log("3. Success! Value is:", data);
-// });
