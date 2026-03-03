@@ -1,26 +1,122 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as path from 'path';
+import { execFile } from 'child_process';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+let isEnabled = true;
+let lastPlayedTime = 0;
+const DEBOUNCE_MS = 1500; // 1.5 second cooldown between sounds
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "faahhhhhh-error" is now active!');
+// Track known error counts per URI to detect NEW errors
+const previousErrorCounts = new Map<string, number>();
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('faahhhhhh-error.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from faahhhhhh_error!');
-	});
+function playFaahSound(extensionPath: string) {
+	const now = Date.now();
+	if (now - lastPlayedTime < DEBOUNCE_MS) {
+		return; // debounce — don't spam the sound
+	}
+	lastPlayedTime = now;
 
-	context.subscriptions.push(disposable);
+	// Try .mp3 first, then .wav
+	const mp3Path = path.join(extensionPath, 'media', 'faah.mp3');
+	const wavPath = path.join(extensionPath, 'media', 'faah.wav');
+
+	const platform = process.platform;
+
+	if (platform === 'win32') {
+		// Windows: use PowerShell to play the sound
+		// Try mp3 first via Windows Media Player COM, fallback to wav via SoundPlayer
+		const psScript = `
+			$mp3 = '${mp3Path.replace(/'/g, "''")}';
+			$wav = '${wavPath.replace(/'/g, "''")}';
+			if (Test-Path $mp3) {
+				Add-Type -AssemblyName presentationCore;
+				$player = New-Object System.Windows.Media.MediaPlayer;
+				$player.Open([Uri]$mp3);
+				$player.Play();
+				Start-Sleep -Seconds 3;
+			} elseif (Test-Path $wav) {
+				$player = New-Object System.Media.SoundPlayer($wav);
+				$player.PlaySync();
+			}
+		`;
+		execFile('powershell', ['-NoProfile', '-Command', psScript], (err) => {
+			if (err) {
+				console.error('Faah sound playback error:', err.message);
+			}
+		});
+	} else if (platform === 'darwin') {
+		// macOS: use afplay
+		const soundFile = require('fs').existsSync(mp3Path) ? mp3Path : wavPath;
+		execFile('afplay', [soundFile], (err) => {
+			if (err) {
+				console.error('Faah sound playback error:', err.message);
+			}
+		});
+	} else {
+		// Linux: use aplay for wav, or mpg123/mpg321 for mp3
+		const fs = require('fs');
+		if (fs.existsSync(mp3Path)) {
+			execFile('mpg123', ['-q', mp3Path], (err) => {
+				if (err) {
+					execFile('mpg321', ['-q', mp3Path], (err2) => {
+						if (err2) {
+							console.error('Faah sound playback error: install mpg123 or mpg321');
+						}
+					});
+				}
+			});
+		} else {
+			execFile('aplay', [wavPath], (err) => {
+				if (err) {
+					console.error('Faah sound playback error:', err.message);
+				}
+			});
+		}
+	}
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+export function activate(context: vscode.ExtensionContext) {
+	console.log('🔊 Faahhhhhh Error extension is now active!');
+
+	// Toggle command
+	const toggleCmd = vscode.commands.registerCommand('faahhhhhh-error.toggle', () => {
+		isEnabled = !isEnabled;
+		vscode.window.showInformationMessage(
+			`Faah sound ${isEnabled ? '🔊 enabled' : '🔇 disabled'}`
+		);
+	});
+
+	// Listen for diagnostic (error) changes
+	const diagnosticListener = vscode.languages.onDidChangeDiagnostics((e) => {
+		if (!isEnabled) {
+			return;
+		}
+
+		for (const uri of e.uris) {
+			const diagnostics = vscode.languages.getDiagnostics(uri);
+			const currentErrorCount = diagnostics.filter(
+				(d) => d.severity === vscode.DiagnosticSeverity.Error
+			).length;
+
+			const previousCount = previousErrorCounts.get(uri.toString()) || 0;
+
+			// Play sound only when NEW errors appear (count increased)
+			if (currentErrorCount > previousCount) {
+				playFaahSound(context.extensionPath);
+			}
+
+			// Update tracked count
+			if (currentErrorCount === 0) {
+				previousErrorCounts.delete(uri.toString());
+			} else {
+				previousErrorCounts.set(uri.toString(), currentErrorCount);
+			}
+		}
+	});
+
+	context.subscriptions.push(toggleCmd, diagnosticListener);
+}
+
+export function deactivate() {
+	previousErrorCounts.clear();
+}

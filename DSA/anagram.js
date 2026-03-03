@@ -23,7 +23,7 @@ var groupAnagrams = function (strs) {
     for (let [key, value] of map) {
         Output.push(value)
     }
-    console.log(Output);
+    console.log(Output)
 
 };
 
