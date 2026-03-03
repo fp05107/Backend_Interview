@@ -1,0 +1,165 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{fontawesome5}
+\usepackage{multicol}
+\setlength{\multicolsep}{-3.0pt}
+\setlength{\columnsep}{-1pt}
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins for one-page compact layout
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.0in}
+\addtolength{\topmargin}{-.75in}
+\addtolength{\textheight}{0.75in}
+
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-2pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{-4pt}]
+
+% Ensure that generate pdf is machine readable/ATS parsable
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-1pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-1pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & \textbf{\small #2} \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-5pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{1.001\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & \textbf{\small #2}\\
+    \end{tabular*}\vspace{-5pt}
+}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.15in]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%-------------------------------------------
+%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{document}
+
+%----------HEADING----------
+\begin{center}
+    {\Huge \scshape Subham Sahoo} \\ \vspace{2pt}
+    Balasore, Odisha, India \\ \vspace{2pt}
+    \small \faPhone\ +91 6371238379 ~ 
+    \href{mailto:subham.sahoo.soro@gmail.com}{\faEnvelope\ \underline{subham.sahoo.soro@gmail.com}} ~ 
+    \href{https://linkedin.com/in/subham-sahoo-37089222b/}{\faLinkedin\ \underline{linkedin.com/in/subham-sahoo}} ~
+    \href{https://github.com/fp05107}{\faGithub\ \underline{github.com/fp05107}} ~ ~ ~ ~
+    \href{https://leetcode.com/u/Subham_1234/}{\faCode\ \underline{leetcode.com/u/Subham}}
+    \vspace{-6pt}
+\end{center}
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {Poulima Infotech}{Nov 2023 -- Present}
+      {Software Engineer}{Remote}
+      \resumeItemListStart
+        \resumeItem{Engineered scalable MERN applications with advanced React.js (hooks, state management, performance optimization) and TypeScript for type-safe development}
+        \resumeItem{Architected 50+ Astrology RESTful APIs with Swisspeh, Node.js \& Express.js, implementing middleware, authentication, and robust server-side logic}
+        \resumeItem{Designed optimized MongoDB schemas with indexing, aggregation pipelines, and performance tuning for high-traffic applications}
+        \resumeItem{Developed CI/CD pipelines with GitHub Actions, containerized with Docker, and deployed on AWS (EC2, S3, RDS) }
+        \resumeItem{Led a 5-member team, and applied software engineering best practices for scalable solutions}
+      \resumeItemListEnd
+      \vspace{-5pt}
+
+    \resumeSubheading
+      {UBK Infotech}{May 2023 -- Oct 2023}
+      {Backend Developer}{Kolkata, West Bengal}
+      \resumeItemListStart
+        \resumeItem{Built secure School Management System for 5K+ users with Node.js, role-based access control, and real-time features}
+        \resumeItem{Optimized RESTful APIs and database queries, integrated Redis caching to improve application performance by 40\%}
+        \resumeItem{Developed real-time notification systems using WebSocket and assisted in Docker containerization and cloud deployment}
+      \resumeItemListEnd
+    
+  \resumeSubHeadingListEnd
+
+%-----------TECHNICAL SKILLS-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{Backend \& APIs}{: Node.js, NestJS, Express.js, TypeScript, RESTful API Design, Microservices} \\
+     \textbf{Databases \& Messaging}{: MongoDB, PostgreSQL, Redis, Apache Kafka, MySQL} \\
+     \textbf{DevOps \& Cloud}{: Docker, AWS (EC2, S3, RDS), CI/CD (GitHub Actions), Kubernetes, Datadog} \\
+     \textbf{Tools \& Practices}{: Jest, Git, Jenkins, System Design, Agile Development} \\
+    }}
+ \end{itemize}
+
+%-----------PROJECTS-----------
+\section{Projects}
+    \resumeSubHeadingListStart
+      \resumeProjectHeading
+          {\textbf{\color{blue}\underline{\href{https://play.google.com/store/apps/details?id=com.astroavastha}{AstroAvastha}}} $|$ \emph{React Native, Node.js, TypeScript, MongoDB, AWS}}{Live}
+          \resumeItemListStart
+            \resumeItem{Architected a full-stack astrology platform with 50+ features, including interactive 3D planetary simulations, real-time chat consultations, secure payment gateways, and multilingual support for Hindi and Telugu audiences}
+\resumeItem{Optimized platform performance by implementing Redis caching for session management, WebSockets for live notifications, and BullMQ job queues to process daily horoscope generation for high-traffic loads}
+\resumeItem{Deployed on AWS with auto-scaling configurations and comprehensive monitoring, maintaining high uptime}
+          \resumeItemListEnd
+          
+      \resumeProjectHeading
+          {\textbf{\color{blue}\underline{\href{https://www.topskyll.com/}{Topskyll}}} $|$ \emph{Next.js, Node.js, PostgreSQL, Docker}}{Live}
+          \resumeItemListStart
+            \resumeItem{Built multi-language code execution engine as microservice with automated evaluation and testing capabilities}
+            \resumeItem{Designed and implemented a comprehensive assessment system, creating technical questions and automated test cases for multi-language code evaluation with instant feedback}
+\resumeItem{Built role-based dashboards using Next.js and Node.js, including HR panels for job posting, user portals for application management, and admin interfaces for internal team oversight}
+          \resumeItemListEnd 
+          
+      \resumeProjectHeading
+{\textbf{\color{blue}\underline{\href{https://play.google.com/store/apps/details?id=com.varasol.telugupanchangamcalendar}{Telugu Calendar Panchangam}}} $|$ \emph{React Native, Node.js, Firebase}}{Live}
+          \resumeItemListStart
+            \resumeItem{Reached 1M+ downloads and 4.2★ rating with offline-first cultural calendar optimized for low-end devices and rural areas}
+            \resumeItem{Integrated Google AdMob for revenue generation while maintaining optimal performance}
+          \resumeItemListEnd 
+    \resumeSubHeadingListEnd
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Amity University}{Apr 2023 -- Present}
+      {Bachelor of Computer Applications (Online)}{CGPA: 8.5/10.0}
+  \resumeSubHeadingListEnd
+
+\end{document}
