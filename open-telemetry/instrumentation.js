@@ -10,72 +10,122 @@ import {
 } from "@opentelemetry/sdk-logs";
 import { logs } from "@opentelemetry/api-logs";
 import { WinstonInstrumentation } from "@opentelemetry/instrumentation-winston";
+import winston from "winston";
 
-// Create OTLP exporters
-const traceExporter = new OTLPTraceExporter({
-  url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT
-    ? `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`
-    : "http://31.97.206.6:4318/v1/traces",
-});
+/**
+ * Configuration options for the observability SDK
+ * @typedef {Object} ObservabilityConfig
+ * @property {string} serviceName - Name of the service
+ * @property {string} otlpEndpoint - OTLP endpoint URL (without /v1/traces or /v1/logs)
+ * @property {string} [logLevel] - Log level (default: 'info')
+ */
 
-const logExporter = new OTLPLogExporter({
-  url:
-    process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT ||
-    "http://31.97.206.6:4318/v1/logs",
-});
+/**
+ * Initialize OpenTelemetry instrumentation
+ * @param {ObservabilityConfig} config - Configuration options
+ * @returns {Object} - Returns logger and shutdown function
+ */
+export function initObservability(config) {
+  const {
+    serviceName = "my-service",
+    otlpEndpoint = "http://localhost:4318",
+    logLevel = "info"
+  } = config;
 
-// Create resource with service name
-const resource = new Resource({
-  [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || "my-express",
-});
+  // Create OTLP exporters
+  const traceExporter = new OTLPTraceExporter({
+    url: `${otlpEndpoint}/v1/traces`,
+  });
 
-// Initialize Logger Provider
-const loggerProvider = new LoggerProvider({
-  resource,
-});
-loggerProvider.addLogRecordProcessor(new BatchLogRecordProcessor(logExporter));
+  const logExporter = new OTLPLogExporter({
+    url: `${otlpEndpoint}/v1/logs`,
+  });
 
-// Register the logger provider globally
-logs.setGlobalLoggerProvider(loggerProvider);
+  // Create resource with service name
+  const resource = new Resource({
+    [ATTR_SERVICE_NAME]: serviceName,
+  });
 
-// Initialize Node SDK
-const sdk = new NodeSDK({
-  resource,
-  traceExporter,
-  instrumentations: [
-    getNodeAutoInstrumentations({
-      // Automatically instruments Express, HTTP, and other Node.js libraries
-      "@opentelemetry/instrumentation-fs": {
-        enabled: false, // Disable file system instrumentation if not needed
-      },
-    }),
-    // Winston instrumentation for log correlation with traces
-    new WinstonInstrumentation({
-      logHook: (span, record) => {
-        record["resource.service.name"] =
-          process.env.OTEL_SERVICE_NAME || "my-express";
-      },
-    }),
-  ],
-});
+  // Initialize Logger Provider
+  const loggerProvider = new LoggerProvider({
+    resource,
+  });
+  loggerProvider.addLogRecordProcessor(new BatchLogRecordProcessor(logExporter));
 
-// Start the SDK
-try {
-  sdk.start();
-  console.log("OpenTelemetry instrumentation initialized successfully");
-} catch (error) {
-  console.error("Error initializing OpenTelemetry:", error);
+  // Register the logger provider globally
+  logs.setGlobalLoggerProvider(loggerProvider);
+
+  // Create Winston logger
+  const logger = winston.createLogger({
+    level: logLevel,
+    format: winston.format.combine(
+      winston.format.timestamp({
+        format: "YYYY-MM-DD HH:mm:ss",
+      }),
+      winston.format.errors({ stack: true }),
+      winston.format.splat(),
+      winston.format.json()
+    ),
+    defaultMeta: {
+      service: serviceName,
+    },
+    transports: [
+      new winston.transports.Console({
+        format: winston.format.combine(
+          winston.format.colorize(),
+          winston.format.printf(({ level, message, timestamp, ...metadata }) => {
+            let msg = `${timestamp} [${level}]: ${message}`;
+            if (Object.keys(metadata).length > 0) {
+              msg += ` ${JSON.stringify(metadata)}`;
+            }
+            return msg;
+          })
+        ),
+      }),
+    ],
+  });
+
+  // Initialize Node SDK
+  const sdk = new NodeSDK({
+    resource,
+    traceExporter,
+    instrumentations: [
+      getNodeAutoInstrumentations({
+        "@opentelemetry/instrumentation-fs": {
+          enabled: false,
+        },
+      }),
+      new WinstonInstrumentation({
+        logHook: (span, record) => {
+          record["resource.service.name"] = serviceName;
+        },
+      }),
+    ],
+  });
+
+  // Start the SDK
+  try {
+    sdk.start();
+    console.log("OpenTelemetry instrumentation initialized successfully");
+  } catch (error) {
+    console.error("Error initializing OpenTelemetry:", error);
+  }
+
+  // Handle graceful shutdown
+  const shutdown = () => {
+    return sdk
+      .shutdown()
+      .then(() => console.log("OpenTelemetry SDK shut down successfully"))
+      .catch((error) =>
+        console.error("Error shutting down OpenTelemetry:", error)
+      );
+  };
+
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+
+  return { logger, shutdown };
 }
 
-// Handle graceful shutdown
-process.on("SIGTERM", () => {
-  sdk
-    .shutdown()
-    .then(() => console.log("OpenTelemetry SDK shut down successfully"))
-    .catch((error) =>
-      console.error("Error shutting down OpenTelemetry:", error)
-    )
-    .finally(() => process.exit(0));
-});
-
+// For backward compatibility, also export the loggerProvider
 export { loggerProvider };
