@@ -1,6 +1,11 @@
 import fs from 'fs';
 import path from 'path'
 import readline from 'readline';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const ___dirname = dirname(__filename);
 
 class FileDB {
 
@@ -28,6 +33,7 @@ class FileDB {
     }
 
     async findOne(predicate, key = null) {
+        console.log("🚀 ~ FileDB ~ findOne ~ this.index[key]:", this.index)
         if (key && !this.index[key]) {
             return null;
         }
